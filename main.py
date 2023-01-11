@@ -4,14 +4,14 @@ import requests
 from datetime import datetime
 
 # Replace with the ID of the instance you want to check
-instance_id = 'i-01234567890abcdef0'
+instance_id = 'i-0cf02d530e32dbd07'
 
 # Replace with your Telegram bot token and chat ID
 telegram_token = '123456:ABC-DEF1234ghIkl-zyx57W2v1u123ew11'
 telegram_chat_id = '12345678'
 
 # specify the region
-session = boto3.Session(region_name='us-west-2')
+session = boto3.Session(region_name='af-south-1')
 ec2 = session.client('ec2')
 
 def check_instance_status():
