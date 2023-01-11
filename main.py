@@ -23,8 +23,10 @@ def start(update, context):
     message = f"Instance ID: {instance_id}\nInstance Status: {instance_status}\nPublic IP: {instance_ip}"
     update.message.reply_text(message)
 
+
 updater = Updater(telegram_token, use_context=True)
-updater.dispatcher.add_handler(CommandHandler("start", start))
+dispatcher = updater.dispatcher
+dispatcher.add_handler(CommandHandler("start", start))
 updater.start_polling()
 updater.idle()
 
