@@ -10,7 +10,9 @@ instance_id = 'i-01234567890abcdef0'
 telegram_token = '123456:ABC-DEF1234ghIkl-zyx57W2v1u123ew11'
 telegram_chat_id = '12345678'
 
-ec2 = boto3.client('ec2')
+# specify the region
+session = boto3.Session(region_name='us-west-2')
+ec2 = session.client('ec2')
 
 def check_instance_status():
     try:
