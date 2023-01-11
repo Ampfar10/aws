@@ -7,8 +7,8 @@ from datetime import datetime
 instance_id = 'i-0cf02d530e32dbd07'
 
 # Replace with your Telegram bot token and chat ID
-telegram_token = '123456:ABC-DEF1234ghIkl-zyx57W2v1u123ew11'
-telegram_chat_id = '12345678'
+telegram_token = '5433855776:AAH5RAL6rrKla3hxygyYhjAwSjVmudbDNUw'
+telegram_chat_id = '2123403786'
 
 # specify the region
 session = boto3.Session(region_name='af-south-1')
