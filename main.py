@@ -2,6 +2,7 @@ import boto3
 import time
 import requests
 from datetime import datetime
+from telegram.ext import Updater, CommandHandler
 
 # Replace with the ID of the instance you want to check
 instance_id = 'i-0cf02d530e32dbd07'
@@ -13,6 +14,19 @@ telegram_chat_id = '2123403786'
 # specify the region
 session = boto3.Session(region_name='af-south-1')
 ec2 = session.client('ec2')
+
+def start(update, context):
+    #get the instance status
+    instance = ec2.describe_instances(InstanceIds=[instance_id])['Reservations'][0]['Instances'][0]
+    instance_status = instance['State']['Name']
+    instance_ip = instance.get('PublicIpAddress', "Not Assigned")
+    message = f"Instance ID: {instance_id}\nInstance Status: {instance_status}\nPublic IP: {instance_ip}"
+    update.message.reply_text(message)
+
+updater = Updater(telegram_token, use_context=True)
+updater.dispatcher.add_handler(CommandHandler("start", start))
+updater.start_polling()
+updater.idle()
 
 def check_instance_status():
     try:
