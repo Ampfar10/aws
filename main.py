@@ -3,6 +3,7 @@ import time
 import requests
 from datetime import datetime
 from telegram.ext import Updater, CommandHandler
+from queue import Queue
 
 # Replace with the ID of the instance you want to check
 instance_id = 'i-0cf02d530e32dbd07'
@@ -24,11 +25,10 @@ def start(update, context):
     update.message.reply_text(message)
 
 
-updater = Updater(telegram_token, use_context=True)
+update_queue = Queue()
+updater = Updater(token=telegram_token, use_context=True, workers=1, update_queue=update_queue)
 dispatcher = updater.dispatcher
 dispatcher.add_handler(CommandHandler("start", start))
-updater.start_polling()
-updater.idle()
 
 def check_instance_status():
     try:
