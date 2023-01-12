@@ -15,7 +15,7 @@ def picture_to_sticker(bot, update):
 
 def main():
     # Get Telegram API key from environment
-    API_KEY = os.environ["TELEGRAM_API_KEY"]
+    API_KEY = "5433855776:AAH5RAL6rrKla3hxygyYhjAwSjVmudbDNUw"
 
     # Set up Telegram bot
     updater = Updater(API_KEY)
