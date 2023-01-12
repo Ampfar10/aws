@@ -1,96 +1,86 @@
-import boto3
-import time
-import requests
-from datetime import datetime
-from telegram.ext import Updater, CommandHandler
-from queue import Queue
+import telegram
+from telegram.ext import Updater, CommandHandler, MessageHandler, Filters
 
-# Replace with the ID of the instance you want to check
-instance_id = 'i-0cf02d530e32dbd07'
+board = [" ", " ", " ", " ", " ", " ", " ", " ", " "]
+player = "X"
+game_on = False
 
-# Replace with your Telegram bot token and chat ID
-telegram_token = '5433855776:AAH5RAL6rrKla3hxygyYhjAwSjVmudbDNUw'
-telegram_chat_id = '2123403786'
+def start(bot, update):
+    global game_on
+    game_on = True
+    bot.send_message(chat_id=update.message.chat_id, text="Welcome to Tic-Tac-Toe! You are player X. To make a move, send the number of the cell where you want to place your marker. The cells are numbered from left to right, top to bottom.")
+    display_board(bot, update)
 
-# specify the region
-session = boto3.Session(region_name='af-south-1')
-ec2 = session.client('ec2')
+def display_board(bot, update):
+    global board
+    message = "```\n" + board[0] + " | " + board[1] + " | " + board[2] + "\n---------\n" + \
+              board[3] + " | " + board[4] + " | " + board[5] + "\n---------\n" + \
+              board[6] + " | " + board[7] + " | " + board[8] + "\n```"
+    bot.send_message(chat_id=update.message.chat_id, text=message, parse_mode=telegram.ParseMode.MARKDOWN)
 
-def start(update, context):
-    #get the instance status
-    instance = ec2.describe_instances(InstanceIds=[instance_id])['Reservations'][0]['Instances'][0]
-    instance_status = instance['State']['Name']
-    instance_ip = instance.get('PublicIpAddress', "Not Assigned")
-    message = f"Instance ID: {instance_id}\nInstance Status: {instance_status}\nPublic IP: {instance_ip}"
-    update.message.reply_text(message)
+def check_win(player):
+    global board
+    # Check rows
+    if board[0] == player and board[1] == player and board[2] == player:
+        return True
+    if board[3] == player and board[4] == player and board[5] == player:
+        return True
+    if board[6] == player and board[7] == player and board[8] == player:
+        return True
+    # Check columns
+    if board[0] == player and board[3] == player and board[6] == player:
+        return True
+    if board[1] == player and board[4] == player and board[7] == player:
+        return True
+    if board[2] == player and board[5] == player and board[8] == player:
+        return True
+    # Check diagonals
+    if board[0] == player and board[4] == player and board[8] == player:
+        return True
+    if board[2] == player and board[4] == player and board[6] == player:
+        return True
+    return False
 
-
-update_queue = Queue()
-updater = Updater(token=telegram_token, use_context=True, workers=1, update_queue=update_queue)
-dispatcher = updater.dispatcher
-dispatcher.add_handler(CommandHandler("start", start))
-
-def check_instance_status():
-    try:
-        # Describe the instance and check its status
-        response = ec2.describe_instance_status(InstanceIds=[instance_id])
-        status = response['InstanceStatuses'][0]['InstanceStatus']['Status']
-        system_status = response['InstanceStatuses'][0]['SystemStatus']['Status']
-
-        # Check if the status check has failed
-        if status == "impaired" and system_status == "impaired":
-            send_message_telegram(f'[{datetime.now()}] Instance {instance_id} has failed status check')
-            return False
+def make_move(bot, update, cell):
+    global board, player, game_on
+    if game_on and board[cell] == " ":
+        board[cell] = player
+        if check_win(player):
+            bot.send_message(chat_id=update.message.chat_id, text="Player " + player + " wins!")
+            game_on = False
         else:
-            send_message_telegram(f'[{datetime.now()}] Instance {instance_id} is healthy')
-            return True
-    except Exception as e:
-        send_message_telegram(f'[{datetime.now()}] An error occurred: {e}')
-        return False
-
-def shutdown_instance():
-    try:
-        # Shut down the instance
-        ec2.stop_instances(InstanceIds=[instance_id])
-        send_message_telegram(f'[{datetime.now()}] Instance {instance_id} has been shut down')
-    except Exception as e:
-        send_message_telegram(f'[{datetime.now()}] An error occurred: {e}')
-
-def start_instance():
-    try:
-        # Start the instance
-        ec2.start_instances(InstanceIds=[instance_id])
-        send_message_telegram(f'[{datetime.now()}] Instance {instance_id} is starting')
-    except Exception as e:
-        send_message_telegram(f'[{datetime.now()}] An error occurred: {e}')
-
-def get_instance_ip():
-    try:
-        # Get the public IP of the instance
-        response = ec2.describe_instances(InstanceIds=[instance_id])
-        public_ip = response['Reservations'][0]['Instances'][0]['PublicIpAddress']
-        send_message_telegram(f'[{datetime.now()}] Public IP of instance {instance_id} is {public_ip}')
-        return public_ip
-    except Exception as e:
-        send_message_telegram(f'[{datetime.now()}] An error occurred: {e}')
-        return None
-
-def send_message_telegram(message):
-    try:
-        # Send message to Telegram
-        url = f'https://api.telegram.org/bot{telegram_token}/sendMessage'
-        data = {'chat_id': telegram_chat_id, 'text': message}
-        requests.post(url, data)
-    except Exception as e:
-        send_message_telegram(f'[{datetime.now()}] An error occurred: {e}')
-
-if not check_instance_status():
-    shutdown_instance()
-    time.sleep(600)
-    start_instance()
-    time.sleep(60) # wait for 1 minute for the instance to fully start
-    ip = get_instance_ip()
-    if ip:
-        send_message_telegram(f'[{datetime.now()}] Instance {instance_id} has been successfully restarted. Public IP: {ip}')
+            if player == "X":
+                player = "O"
+            else:
+                player = "X"
+            display_board(bot, update)
     else:
-        send_message_telegram(f'[{datetime.now()}] Instance {instance_id} has been successfully restarted but could not fetch the IP')
+        bot.send_message(chat_id=update.message.chat_id, text="Invalid move or game is not currently running. Send /start to begin a new game.")
+
+def move(bot, update):
+    try:
+        cell = int(update.message.text) - 1
+        if cell < 0 or cell > 8:
+            raise ValueError
+        make_move(bot, update, cell)
+    except ValueError:
+        bot.send_message(chat_id=update.message.chat_id, text="Invalid move. Please enter a number between 1 and 9.")
+
+# Create the Updater and pass it the bot's token
+updater = Updater(token="5433855776:AAH5RAL6rrKla3hxygyYhjAwSjVmudbDNUw")
+
+# Get the dispatcher to register handlers
+dp = updater.dispatcher
+
+# Add a handler for the "start" command
+dp.add_handler(CommandHandler("start", start))
+
+# Add a handler for text messages
+dp.add_handler(MessageHandler(Filters.text, move))
+
+# Start the bot
+updater.start_polling()
+
+# Run the bot until the user presses Ctrl-C or the process receives SIGINT,
+# SIGTERM or SIGABRT
+updater.idle()
