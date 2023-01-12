@@ -81,7 +81,7 @@ def handle_message(update, context):
         update.message.reply_text("Invalid move. Please enter a number between 1 and 9.")
 
 # Create the Updater and pass it the bot's token
-updater = Updater(token="YOUR_BOT_TOKEN", use_context=True)
+updater = Updater(token="5433855776:AAH5RAL6rrKla3hxygyYhjAwSjVmudbDNUw", use_context=True)
 
 # Get the dispatcher to register handlers
 dp = updater.dispatcher
